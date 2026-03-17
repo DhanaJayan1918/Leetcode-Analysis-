@@ -1,0 +1,28 @@
+services:
+  # Backend — FastAPI Web Service
+  - type: web
+    name: leetcode-scraper-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: MONGO_URI
+        sync: false  # You must set this manually in the Render dashboard
+      - key: PYTHON_VERSION
+        value: "3.13"
+
+  # Frontend — Static Site
+  - type: web
+    name: leetcode-scraper-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        sync: false  # Set to your backend URL after deploying backend
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
