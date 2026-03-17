@@ -10,7 +10,7 @@ services:
       - key: MONGO_URI
         sync: false  # You must set this manually in the Render dashboard
       - key: PYTHON_VERSION
-        value: "3.13"
+        value: "3.11"
 
   # Frontend — Static Site
   - type: web
