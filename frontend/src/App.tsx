@@ -1,4 +1,6 @@
+import { useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { fetcher } from './utils/api'
 import { AnimatePresence } from 'framer-motion'
 import { Navbar } from './components/Navbar'
 import { Landing } from './pages/Landing'
@@ -8,6 +10,18 @@ import { WeeklyAnalysis } from './pages/WeeklyAnalysis'
 import './App.css'
 
 function App() {
+  useEffect(() => {
+    // Ping backend every 10 minutes to keep it alive (prevent free-tier sleep)
+    const interval = setInterval(() => {
+      fetcher('/keep-alive').catch(() => {})
+    }, 10 * 60 * 1000)
+    
+    // Initial ping
+    fetcher('/keep-alive').catch(() => {})
+
+    return () => clearInterval(interval)
+  }, [])
+
   return (
     <Router>
       <Navbar />

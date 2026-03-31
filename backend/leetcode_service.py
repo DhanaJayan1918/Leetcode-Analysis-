@@ -46,6 +46,24 @@ query recentAcSubmissions($username: String!, $limit: Int!) {
 }
 """
 
+contest_history_query = """
+query getContestHistory($username: String!) {
+  userContestRankingHistory(username: $username) {
+    attended
+    rating
+    ranking
+    trendDirection
+    problemsSolved
+    totalProblems
+    finishTimeInSeconds
+    contest {
+      title
+      startTime
+    }
+  }
+}
+"""
+
 
 def fetch_and_store(username: str):
 
@@ -110,4 +128,24 @@ def fetch_recent_submissions(username: str, limit: int = 15):
             })
         return results
     except Exception:
-        return []
+        return []
+
+def fetch_contest_history(username: str):
+    try:
+        response = requests.post(
+            LEETCODE_URL,
+            json={
+                "query": contest_history_query,
+                "variables": {"username": username}
+            },
+            timeout=10
+        )
+        data = response.json().get("data", {})
+        history = data.get("userContestRankingHistory", [])
+        
+        # Filter out contests that the user did not attend
+        attended = [contest for contest in history if contest.get("attended") is True]
+        return attended
+    except Exception:
+        return []
+

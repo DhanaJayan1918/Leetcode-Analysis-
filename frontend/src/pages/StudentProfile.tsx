@@ -4,8 +4,8 @@ import { motion } from 'framer-motion'
 import { useStudent } from '../hooks/useStudent'
 import { StudentCard } from '../components/StudentCard'
 import { LoadingSkeleton } from '../components/LoadingSkeleton'
-import { ArrowLeft, ExternalLink, Clock, TrendingUp } from 'lucide-react'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { ArrowLeft, ExternalLink, Clock, TrendingUp, Trophy } from 'lucide-react'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LineChart, Line } from 'recharts'
 import { fetcher } from '../utils/api'
 
 interface RecentSubmission {
@@ -13,6 +13,20 @@ interface RecentSubmission {
   titleSlug: string
   timestamp: string
   lang: string
+}
+
+interface ContestHistoryData {
+  attended: boolean;
+  rating: number;
+  ranking: number;
+  trendDirection: string;
+  problemsSolved: number;
+  totalProblems: number;
+  finishTimeInSeconds: number;
+  contest: {
+    title: string;
+    startTime: number;
+  };
 }
 
 const formatTimeAgo = (timestamp: string) => {
@@ -48,6 +62,9 @@ export const StudentProfile = () => {
   const [recentSubmissions, setRecentSubmissions] = useState<RecentSubmission[]>([])
   const [recentLoading, setRecentLoading] = useState(true)
 
+  const [contestHistory, setContestHistory] = useState<ContestHistoryData[]>([])
+  const [contestLoading, setContestLoading] = useState(true)
+
   useEffect(() => {
     if (!username) return
     const fetchRecent = async () => {
@@ -62,6 +79,19 @@ export const StudentProfile = () => {
       }
     }
     fetchRecent()
+
+    const fetchContest = async () => {
+      setContestLoading(true)
+      try {
+        const res = await fetcher<{ data: ContestHistoryData[] }>(`/student/${username}/contest-history`)
+        setContestHistory(res.data)
+      } catch {
+        setContestHistory([])
+      } finally {
+        setContestLoading(false)
+      }
+    }
+    fetchContest()
   }, [username])
 
   if (!username) {
@@ -206,6 +236,71 @@ export const StudentProfile = () => {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
+          </motion.div>
+
+          {/* Contest Rating History Graph */}
+          <motion.div
+            variants={item}
+            className="glass p-8 rounded-xl border border-surface-light/20"
+          >
+            <h2 className="text-2xl font-bold text-text-primary mb-6 flex items-center gap-3">
+              <Trophy size={24} className="text-yellow-500" />
+              Contest History
+            </h2>
+            {contestLoading ? (
+              <div className="h-[300px] w-full flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full border-4 border-surface border-t-accent-primary animate-spin" />
+              </div>
+            ) : contestHistory.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={contestHistory}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.1)" />
+                  <XAxis 
+                    dataKey={(val) => val.contest.title.replace('Weekly Contest ', 'W').replace('Biweekly Contest ', 'B')} 
+                    stroke="#cbd5e1" 
+                    tick={{ fontSize: 12 }}
+                    interval="preserveStartEnd"
+                  />
+                  <YAxis 
+                    stroke="#cbd5e1" 
+                    domain={['auto', 'auto']}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload as ContestHistoryData;
+                        return (
+                          <div className="bg-[#1e293b] border border-[#334155] p-3 rounded-lg shadow-xl">
+                            <p className="font-bold text-white mb-2">{data.contest.title}</p>
+                            <p className="text-accent-primary font-medium">Rating: {Math.round(data.rating)}</p>
+                            <p className="text-green-400 font-medium mt-1">
+                              Solved: {data.problemsSolved} / {data.totalProblems}
+                            </p>
+                            <p className="text-text-muted text-xs mt-2">
+                              Rank: {data.ranking}
+                            </p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="rating" 
+                    stroke="#8b5cf6" 
+                    strokeWidth={3}
+                    dot={{ fill: '#8b5cf6', strokeWidth: 2, r: 4 }}
+                    activeDot={{ r: 6, fill: '#a855f7' }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="text-center py-12 text-text-muted">
+                No contest history available
+              </div>
+            )}
           </motion.div>
 
           {/* Weekly Analysis Link */}

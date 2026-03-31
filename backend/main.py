@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from leaderboard_service import get_leaderboard
 from update_service import update_all_students
-from leetcode_service import fetch_recent_submissions
+from leetcode_service import fetch_recent_submissions, fetch_contest_history
 from database import students_collection, snapshots_collection
 from fastapi.middleware.cors import CORSMiddleware
 import threading
@@ -158,3 +158,12 @@ def get_weekly_analysis(username: str):
         })
 
     return {"data": result}
+
+@app.get("/student/{username}/contest-history")
+def get_contest_history(username: str):
+    history = fetch_contest_history(username)
+    return {"data": history}
+
+@app.get("/keep-alive")
+def keep_alive():
+    return {"status": "alive"}

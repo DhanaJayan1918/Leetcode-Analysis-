@@ -1,5 +1,6 @@
 import { Student } from '../types/api'
 import { motion } from 'framer-motion'
+import { ExternalLink } from 'lucide-react'
 
 interface StudentCardProps {
   student: Student
@@ -22,7 +23,18 @@ export const StudentCard = ({ student }: StudentCardProps) => {
           className="border-b border-accent-purple/20 pb-6"
         >
           <h1 className="text-5xl md:text-6xl font-display font-bold gradient-text mb-3">{student.name}</h1>
-          <p className="text-text-muted text-lg font-medium">@{student.username}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-text-muted text-lg font-medium">@{student.username}</p>
+            <a 
+              href={`https://leetcode.com/u/${student.username}/`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-text-muted hover:text-accent-primary transition-colors flex items-center gap-1.5 text-sm bg-surface/30 px-3 py-1 rounded-full border border-surface-light/10 ml-2"
+            >
+              <ExternalLink size={14} />
+              <span>View Profile</span>
+            </a>
+          </div>
         </motion.div>
 
         <div className="grid grid-cols-1 gap-5">
