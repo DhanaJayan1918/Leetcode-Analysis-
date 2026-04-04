@@ -5,6 +5,24 @@ from leetcode_service import fetch_recent_submissions, fetch_contest_history
 from database import students_collection, snapshots_collection
 from fastapi.middleware.cors import CORSMiddleware
 import threading
+import os
+import time
+import requests
+
+def keep_server_awake():
+    url = os.environ.get("RENDER_EXTERNAL_URL")
+    if not url:
+        print("RENDER_EXTERNAL_URL not found. Keep-alive disabled.")
+        return
+    
+    keep_alive_url = f"{url.rstrip('/')}/keep-alive"
+    while True:
+        time.sleep(600)  # Sleep for 10 minutes
+        try:
+            res = requests.get(keep_alive_url)
+            print(f"Keep-alive ping successful: {res.status_code}")
+        except Exception as e:
+            print(f"Keep-alive ping failed: {e}")
 
 
 app = FastAPI()
@@ -21,6 +39,10 @@ def startup_update():
     # Run update in a background thread so server starts immediately
     thread = threading.Thread(target=update_all_students, daemon=True)
     thread.start()
+    
+    # Run keep-alive ping in a background thread
+    keep_alive_thread = threading.Thread(target=keep_server_awake, daemon=True)
+    keep_alive_thread.start()
 
 @app.get("/")
 def home():
