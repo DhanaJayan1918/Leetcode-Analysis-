@@ -34,10 +34,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+UPDATE_CHECK_INTERVAL_SECONDS = 1800  # how often to check whether the 24h cooldown has expired
+
+
+def run_update_scheduler():
+    # update_all_students() enforces the 24h cooldown itself, so calling it
+    # periodically is cheap: it only fetches when an update is actually due
+    # (or when finishing an interrupted run).
+    while True:
+        try:
+            update_all_students()
+        except Exception as e:
+            print(f"Scheduled update failed: {e}")
+        time.sleep(UPDATE_CHECK_INTERVAL_SECONDS)
+
+
 @app.on_event("startup")
 def startup_update():
-    # Run update in a background thread so server starts immediately
-    thread = threading.Thread(target=update_all_students, daemon=True)
+    # Run the update scheduler in a background thread so server starts immediately
+    thread = threading.Thread(target=run_update_scheduler, daemon=True)
     thread.start()
     
     # Run keep-alive ping in a background thread
